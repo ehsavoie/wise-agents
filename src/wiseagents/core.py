@@ -937,7 +937,8 @@ class WiseAgent(yaml.YAMLObject):
         Args:
             message (WiseAgentMessage): the message to send
             dest_agent_name (str): the name of the destination agent'''
-        message.sender = self.name
+        if message.sender == None:
+            message.sender = self.name
         context = WiseAgentRegistry.get_or_create_context(message.context_name)
         context.add_participant(self.name)
         self.transport.send_request(message, dest_agent_name)
