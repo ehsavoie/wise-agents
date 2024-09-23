@@ -1,4 +1,5 @@
 from abc import *
+from builtins import dict
 from enum import Enum, auto
 from typing import Callable, Optional
 
@@ -73,7 +74,20 @@ class WiseAgentMessage(YAMLObject):
             sender (str): the sender of the message
         '''
         self._sender = sender
-    
+    def str_to_dict(string):
+        # remove the curly braces from the string
+        string = string.strip('WiseAgentMessage()')
+
+        # split the string into key-value pairs
+        pairs = string.split(', ')
+        result = dict()
+        # use a dictionary comprehension to create
+        # the dictionary, converting the values to
+        # integers and removing the quotes from the keys
+        for pair in pairs:
+            key, value = pair.split('=')
+            result[key] = value
+        return result
     @property
     def message_type(self) -> WiseAgentMessageType:
         """Get the type of the message (or None if the type was not specified)."""
@@ -123,7 +137,6 @@ class WiseAgentTransport(YAMLObject):
         del state['_error_receiver']
         return state
 
-       
     @abstractmethod
     def start(self):
         """

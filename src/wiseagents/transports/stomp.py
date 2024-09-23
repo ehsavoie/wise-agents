@@ -52,8 +52,8 @@ class StompWiseAgentTransport(WiseAgentTransport):
     '''A transport for sending messages between agents using the STOMP protocol.'''
     
     yaml_tag = u'!wiseagents.transports.StompWiseAgentTransport'
-    request_conn : stomp.Connection = None
-    response_conn : stomp.Connection = None
+    request_conn : stomp.Connection12 = None
+    response_conn : stomp.Connection12 = None
     
     def __init__(self, host: str, port: int, transport_agent_name: str):
         '''Initialize the transport.
@@ -85,14 +85,14 @@ class StompWiseAgentTransport(WiseAgentTransport):
         if (self.request_conn is not None and self.request_conn.is_connected()) and (self.response_conn is not None and self.response_conn.is_connected()):
             return
         hosts = [(self.host, self.port)]
-        headers={'destination-type':'ANYCAST'}
-        self.request_conn = stomp.Connection(host_and_ports=hosts, heartbeats=(60000, 60000))
+        headers={'destination-type':'ANYCAST', 'subscription-type':'ANYCAST'}
+        self.request_conn = stomp.Connection12(host_and_ports=hosts, heartbeats=(60000, 60000))
         self.request_conn.set_listener('WiseAgentRequestTopicListener', WiseAgentRequestQueueListener(self))
-        self.request_conn.connect(os.getenv("STOMP_USER"), os.getenv("STOMP_PASSWORD"), wait=True)
+        self.request_conn.connect(os.getenv("STOMP_USER"), os.getenv("STOMP_PASSWORD"), wait=True, headers=headers)
         logging.info("Subscribing to " + self.request_queue)
         self.request_conn.subscribe(destination=self.request_queue, id=id(self), ack='auto', headers=headers)
         
-        self.response_conn = stomp.Connection(host_and_ports=hosts, heartbeats=(60000, 60000))
+        self.response_conn = stomp.Connection12(host_and_ports=hosts, heartbeats=(60000, 60000))
         
         self.response_conn.set_listener('WiseAgentResponseQueueListener', WiseAgentResponseQueueListener(self))
         self.response_conn.connect(os.getenv("STOMP_USER"), os.getenv("STOMP_PASSWORD"), wait=True)
@@ -108,6 +108,7 @@ class StompWiseAgentTransport(WiseAgentTransport):
             message (WiseAgentMessage): the message to send
             dest_transport_agent_name (str): the destination agent name'''
         # Send the message using the STOMP protocol
+        headers={'destination-type':'ANYCAST', 'subscription-type':'ANYCAST'}
         if self.request_conn is None or self.response_conn is None:
             self.start()
         if self.request_conn.is_connected() == False:
@@ -116,7 +117,7 @@ class StompWiseAgentTransport(WiseAgentTransport):
             self.response_conn.connect(os.getenv("STOMP_USER"), os.getenv("STOMP_PASSWORD"), wait=True)
         request_destination = 'queue/request/' + dest_transport_agent_name
         logging.debug(f"Sending request {message} to {request_destination}")
-        self.request_conn.send(body=yaml.dump(message), destination=request_destination)
+        self.request_conn.send(body=yaml.dump(message), destination=request_destination, headers=headers)
         
     def send_response(self, message: WiseAgentMessage, dest_transport_agent_name: str):
         '''Send a response message to an agent.
@@ -125,11 +126,12 @@ class StompWiseAgentTransport(WiseAgentTransport):
             message (WiseAgentMessage): the message to send
             dest_transport_agent_name (str): the destination agent name'''
         # Send the message using the STOMP protocol
+        headers={'destination-type':'ANYCAST', 'subscription-type':'ANYCAST'}
         if self.request_conn is None or self.response_conn is None:
             self.start()
         response_destination = 'queue/response/' + dest_transport_agent_name
         logging.debug(f"****** Sending response {message} to {response_destination}")
-        self.response_conn.send(body=yaml.dump(message), destination=response_destination)
+        self.response_conn.send(body=yaml.dump(message), destination=response_destination, headers=headers)
 
     def stop(self):
         '''Stop the transport.'''
