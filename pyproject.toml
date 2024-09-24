@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wiseagents"
-version = "0.0.1.dev000005"
+version = "0.0.1.dev000006"
 description = "Multi-agent framework"
 authors = []
 readme = "README.md"
