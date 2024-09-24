@@ -1,0 +1,57 @@
+name: Publish a new release
+
+on:
+  workflow_dispatch:
+    inputs:
+      previousVersion:
+        description: 'Previous version'
+        required: true
+      version:
+        description: 'Release version'
+        required: true
+      nextVersion:
+        description: 'Next version after release (-SNAPSHOT will be added automatically)'
+        required: true
+# .github/workflows/ci-cd.yml
+jobs:
+  build:
+      name: Build distribution 📦
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name:  Update pip
+        run: |
+          python -m pip install --upgrade pip
+      - name: Install pypa/build
+        run: >-
+          python3 -m
+          pip install
+          build setuptools_scm
+          --user
+      - name: Build a binary wheel and a source tarball
+        run: python3 -m build --wheel --no-isolation --outdir artefacts/
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: artefacts/
+  testpypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/wise-agents
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+    # retrieve your distributions here
+    - name: Publish package distributions to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        verbose: true
+        packages-dir: artefacts/
