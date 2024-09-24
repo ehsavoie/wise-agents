@@ -29,7 +29,7 @@ jobs:
           build setuptools setuptools_scm wheel wheel twine
           --user
       - name: Build a binary wheel and a source tarball
-        run: python3 -m build --wheel --no-isolation
+        run: python3 -m build --wheel --sdist
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
