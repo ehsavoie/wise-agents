@@ -1,6 +1,16 @@
-name: Publish a new release
+name: Publish a new release 📦
 
-on: push
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release Version'
+        required: true
+        type: 'string'
+      release_note:
+        description: 'Release Note'
+        required: false
+        type: 'string'
 
 permissions:
   id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
@@ -26,9 +36,11 @@ jobs:
         run: >-
           python3 -m
           pip install
-          build setuptools setuptools_scm wheel wheel twine
+          build setuptools setuptools_scm wheel dynamic-versioning twine
           --user
       - name: Build a binary wheel and a source tarball
+        env: 
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.event.inputs.release_version }}
         run: python3 -m build --wheel --sdist
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
@@ -41,7 +53,6 @@ jobs:
     environment:
       name: testpypi
       url: https://test.pypi.org/project/wiseagents/
-
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@v4
@@ -65,9 +76,9 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
       run: >-
         gh release create
-        '${{ github.ref_name }}_008'
+        '${{ github.event.inputs.release_version }}'
         --repo '${{ github.repository }}'
-        --notes ""
+        --notes '${{ github.event.inputs.release_note }}'
     - name: Upload artifact signatures to GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
@@ -76,5 +87,5 @@ jobs:
       # sigstore-produced signatures and certificates.
       run: >-
         gh release upload
-        '${{ github.ref_name }}_008' dist/**
+        '${{ github.event.inputs.release_version }}' dist/**
         --repo '${{ github.repository }}'

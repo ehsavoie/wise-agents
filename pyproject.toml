@@ -1,16 +1,19 @@
 
 [build-system]
 requires = [
+    "dynamic-versioning",
+    "setuptools>=64", 
+    "setuptools-scm[toml]>=8",
+    "twine",
     "wheel", 
-    "setuptools", 
-    "setuptools-scm[toml]",
-    "twine"
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "wiseagents"
-version = "0.0.1.dev000008"
+dynamic = [
+  "version",
+]
 description = "Multi-agent framework"
 authors = []
 readme = "README.md"
@@ -77,3 +80,6 @@ markers = [
     "needsllama: Needs llama, and the model is too big for GitHub Actions.",
     "needsqroq: Needs an API key for Groq to be able to run successfully.",
 ]
+
+
+[tool.setuptools_scm]
